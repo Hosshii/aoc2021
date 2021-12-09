@@ -22,8 +22,12 @@ fn main() -> Result<()> {
         .collect::<Option<Vec<_>>>()
         .ok_or("err")?;
 
-    let solved = solve1(data);
-    println!("solved1: {}", solved);
+    let data: Vec<_> = data
+        .into_iter()
+        .map(|v| v.into_iter().map(|v| (v, false)).collect())
+        .collect();
+    let solved = solve2(data);
+    println!("solved2: {}", solved);
     Ok(())
 }
 
@@ -63,4 +67,65 @@ fn solve1(data: Vec<Vec<u32>>) -> u32 {
         }
     }
     result
+}
+
+// data (value, is_seen)
+fn solve2(mut data: Vec<Vec<(u32, bool)>>) -> u32 {
+    let mut result = Vec::new();
+    for y in 0..data.len() {
+        for x in 0..data[0].len() {
+            if is_valid(&data, (x, y)) {
+                let size = count_size(&mut data, (x, y));
+
+                result.push(size);
+            }
+        }
+    }
+
+    result.sort_unstable();
+    let len = result.len();
+
+    result[len - 1] * result[len - 2] * result[len - 3]
+}
+
+fn count_size(data: &mut Vec<Vec<(u32, bool)>>, (x, y): (usize, usize)) -> u32 {
+    let mut result = 1;
+    data[y][x].1 = true;
+
+    // up
+    if y != 0 {
+        let up = (x, y - 1);
+        if is_valid(data, up) {
+            result += count_size(data, up);
+        }
+    }
+
+    // bottom
+    if y != data.len() - 1 {
+        let bottom = (x, y + 1);
+        if is_valid(data, bottom) {
+            result += count_size(data, bottom);
+        }
+    }
+
+    // right
+    if x != data[0].len() - 1 {
+        let right = (x + 1, y);
+        if is_valid(data, right) {
+            result += count_size(data, right);
+        }
+    }
+
+    // left
+    if x != 0 {
+        let left = (x - 1, y);
+        if is_valid(data, left) {
+            result += count_size(data, left);
+        }
+    }
+    result
+}
+
+fn is_valid(data: &[Vec<(u32, bool)>], (x, y): (usize, usize)) -> bool {
+    !data[y][x].1 && data[y][x].0 < 9
 }
