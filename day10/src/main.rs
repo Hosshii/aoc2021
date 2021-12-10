@@ -1,7 +1,9 @@
 fn main() -> IResult<()> {
-    let input = include_str!("../input/example");
+    let input = include_str!("../input/input");
     let parsed = parse(input)?;
-    let solved = solve(&parsed);
+    let mut solved = solve(&parsed);
+    solved.sort();
+    let solved = solved[solved.len() / 2];
     println!("{}", solved);
     Ok(())
 }
@@ -17,10 +19,13 @@ fn parse(ipt: &str) -> IResult<Vec<Vec<Delimiter>>> {
     Ok(a)
 }
 
-fn solve(data: &[Vec<Delimiter>]) -> i64 {
+fn solve(data: &[Vec<Delimiter>]) -> Vec<i64> {
     let mut stack = Vec::with_capacity(data[0].len());
-    let mut result = 0;
-    for row in data {
+    let mut results = Vec::new();
+
+    'outer: for row in data {
+        let mut result = 0;
+        stack.clear();
         for del in row {
             use Delimiter::*;
             match del {
@@ -29,7 +34,7 @@ fn solve(data: &[Vec<Delimiter>]) -> i64 {
                     if let Some(last) = stack.pop() {
                         let expected = last.get_rhs().expect("unexpected delimiter");
                         if *x != expected {
-                            result += *x as i64;
+                            continue 'outer;
                         }
                     } else {
                         unreachable!()
@@ -37,20 +42,27 @@ fn solve(data: &[Vec<Delimiter>]) -> i64 {
                 }
             }
         }
+        while let Some(del) = stack.pop() {
+            let expected = del.get_rhs().expect("unexpected delimiter");
+            result *= 5;
+            result += expected as i64;
+        }
+
+        results.push(result);
     }
-    result
+    results
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Delimiter {
     LParen,
-    RParen = 3,
-    LBracket,
-    RBracket = 57,
-    LBrace,
-    RBrace = 1197,
-    LAngle,
-    RAngle = 25137,
+    RParen = 1,
+    LBracket = 100,
+    RBracket = 2,
+    LBrace = 200,
+    RBrace = 3,
+    LAngle = 300,
+    RAngle = 4,
 }
 
 impl Delimiter {
