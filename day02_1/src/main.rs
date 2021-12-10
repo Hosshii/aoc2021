@@ -3,31 +3,31 @@ use std::str::FromStr;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 fn main() -> Result<()> {
     println!("Hello, world!");
-    let ipt = include_str!("input");
+    let ipt = include_str!("../input/input");
     let parsed = parse(ipt)?;
     let solved = solve(&parsed);
     println!("{}", solved);
     Ok(())
 }
 
-fn solve(ipt: &[(Direction, u32)]) -> u32 {
-    let (h, d) = ipt
+fn solve(ipt: &[(Direction, i32)]) -> i32 {
+    let (h, d, aim) = ipt
         .iter()
-        .fold((0, 0), |(horizontal, depth), (d, x)| match d {
-            Direction::Down => (horizontal, depth + x),
-            Direction::Up => (horizontal, depth - x),
-            Direction::Forward => (horizontal + x, depth),
+        .fold((0, 0, 0), |(horizontal, depth, aim), (d, x)| match d {
+            Direction::Down => (horizontal, depth, aim + x),
+            Direction::Up => (horizontal, depth, aim - x),
+            Direction::Forward => (horizontal + x, depth + x * aim, aim),
         });
     h * d
 }
 
-fn parse(input: &str) -> Result<Vec<(Direction, u32)>> {
+fn parse(input: &str) -> Result<Vec<(Direction, i32)>> {
     let mut result = Vec::new();
     for l in input.lines() {
         let mut splitetd = l.split_ascii_whitespace();
         let l = splitetd.next().ok_or("no line")?;
         let d = Direction::from_str(l)?;
-        let num = splitetd.next().ok_or("err")?.parse::<u32>()?;
+        let num = splitetd.next().ok_or("err")?.parse::<i32>()?;
         result.push((d, num));
     }
     Ok(result)
