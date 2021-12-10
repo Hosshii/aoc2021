@@ -1,5 +1,4 @@
 use std::{
-    cmp,
     fs::File,
     io::{BufRead, BufReader},
 };
@@ -31,6 +30,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn solve1(data: Vec<Vec<u32>>) -> u32 {
     let mut result = 0;
     for (y, row) in data.iter().enumerate() {

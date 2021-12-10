@@ -11,7 +11,7 @@ fn main() -> Result<()> {
 }
 
 fn solve(ipt: &[(Direction, i32)]) -> i32 {
-    let (h, d, aim) = ipt
+    let (h, d, _) = ipt
         .iter()
         .fold((0, 0, 0), |(horizontal, depth, aim), (d, x)| match d {
             Direction::Down => (horizontal, depth, aim + x),
