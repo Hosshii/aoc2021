@@ -5,12 +5,14 @@ fn main() {
         .into_iter()
         .map(|x| x.into_iter().map(|c| (c, false)).collect::<Vec<_>>())
         .collect::<Vec<Vec<_>>>();
-    let mut sum = 0;
-    for i in 0..100 {
-        sum += step(&mut parsed);
+
+    let mut i = 0;
+    while !check_all_flash(&parsed) {
+        step(&mut parsed);
+        i += 1;
     }
 
-    println!("{}", sum);
+    println!("{}", i);
 }
 
 fn parse(ipt: &str) -> Vec<Vec<i32>> {
@@ -79,4 +81,10 @@ fn incr(data: &mut [Vec<(i32, bool)>], x: isize, y: isize, n: i32) {
 fn check_flash(data: &mut [Vec<(i32, bool)>]) -> bool {
     data.iter()
         .any(|row| row.iter().any(|(c, b)| (*c > 9) && !*b))
+}
+
+/// すべて点灯しているか
+fn check_all_flash(data: &[Vec<(i32, bool)>]) -> bool {
+    data.iter()
+        .all(|row| row.iter().all(|(c, b)| (*c == 0) && !*b))
 }
