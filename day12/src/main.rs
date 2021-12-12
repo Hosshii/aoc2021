@@ -1,34 +1,38 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 fn main() {
-    let ipt = include_str!("../input/input");
+    let ipt = include_str!("../input/sample2");
     let parsed = parse(ipt);
 
-    let paths = solve(parsed, "start");
+    let paths = solve(parsed, "start", false);
 
     println!("{}", paths.len());
     // for path in paths {
-    //     for node in path {
-    //         println!("{}", node.borrow().name);
+    //     for node in path.iter().rev() {
+    //         print!("{},", node.borrow().name);
     //     }
     //     println!();
     // }
     // println!("{:?}", parsed);
 }
 
-// fn solve(map: HashMap<&str, NodeRef>) -> Vec<Path> {
-//     let start = "start";
-//     let start_node = map.get(start).expect("start node not found");
-//     for neighbor in start_node.borrow().neighbors {}
-// }
-
-fn solve(mut map: HashMap<&str, (NodeRef, bool)>, name: &str) -> Vec<Path> {
-    let (cur, visited) = map.get_mut(name).expect("node not found");
+fn solve(
+    mut map: HashMap<&str, (NodeRef, bool, u8)>,
+    name: &str,
+    mut visited_twice: bool,
+) -> Vec<Path> {
+    let (cur, visited, count) = map.get_mut(name).expect("node not found");
     if cur.borrow().type_ == NodeType::Small {
+        if !visited_twice {
+            *count += 1;
+            if *count == 2 {
+                visited_twice = true;
+            }
+        }
         *visited = true;
     }
 
-    let (cur, _) = map.get(name).expect("node not found");
+    let (cur, _, _) = map.get(name).expect("node not found");
 
     let mut result = vec![];
     if name == "end" {
@@ -37,14 +41,17 @@ fn solve(mut map: HashMap<&str, (NodeRef, bool)>, name: &str) -> Vec<Path> {
     }
 
     for neighbor in &cur.borrow().neighbors {
+        if neighbor.borrow().name == "start" {
+            continue;
+        }
         let visited = map
             .get(&neighbor.borrow().name.as_str())
             .expect("neighbor not found")
             .1;
-        if !visited {
+        if !visited || !visited_twice {
             // println!("hh {}", neighbor.borrow().name);
             let name = neighbor.borrow().name.clone();
-            let mut paths = solve(map.clone(), &name);
+            let mut paths = solve(map.clone(), &name, visited_twice);
             paths.iter_mut().for_each(|path| path.push(Rc::clone(cur)));
             result.append(&mut paths);
         }
@@ -52,7 +59,7 @@ fn solve(mut map: HashMap<&str, (NodeRef, bool)>, name: &str) -> Vec<Path> {
     result
 }
 
-fn parse(ipt: &str) -> HashMap<&str, (NodeRef, bool)> {
+fn parse(ipt: &str) -> HashMap<&str, (NodeRef, bool, u8)> {
     let mut map = HashMap::new();
     for line in ipt.lines() {
         let mut splitted = line.split('-');
@@ -72,7 +79,7 @@ fn parse(ipt: &str) -> HashMap<&str, (NodeRef, bool)> {
     map
 }
 
-fn insert_node<'a, 'b>(map: &'a mut HashMap<&'b str, (NodeRef, bool)>, name: &'b str)
+fn insert_node<'a, 'b>(map: &'a mut HashMap<&'b str, (NodeRef, bool, u8)>, name: &'b str)
 where
     'b: 'a,
 {
@@ -81,7 +88,7 @@ where
     } else {
         NodeType::Small
     };
-    map.insert(name, (Node::new_rc(name, ty), false));
+    map.insert(name, (Node::new_rc(name, ty), false, 0));
 }
 
 #[derive(Debug, Clone)]
