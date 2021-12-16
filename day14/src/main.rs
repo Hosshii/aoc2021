@@ -3,26 +3,55 @@ use std::collections::{BTreeMap, HashMap, LinkedList};
 fn main() {
     let ipt = include_str!("../input/input");
     let (polymer, def) = parse(ipt);
-    // println!("{:?} {:?}", polymer, def);
-    let result = (0..40).fold(polymer, |acc, _| insert(LinkedList::new(), acc, &def));
-    // println!("{:?}", result);
-    let result = count(&result);
+
+    let solved = (0..40).fold(polymer, |acc, _| solve(&acc, &def));
+
+    let iter = ipt.lines().next().unwrap().chars();
+    let chars = (iter.clone().next().unwrap(), iter.last().unwrap());
+    let result = count(&solved, chars);
     println!("{}", result);
 }
 
-fn count(list: &LinkedList<char>) -> usize {
-    let tree = list.iter().fold(BTreeMap::new(), |mut acc, cur| {
-        acc.entry(*cur).and_modify(|x| *x += 1).or_insert(1);
-        acc
-    });
-    let max = tree.iter().max_by_key(|(_, v)| *v).unwrap();
-    let min = tree.iter().min_by_key(|(_, v)| *v).unwrap();
-    max.1 - min.1
+fn solve(
+    polymer: &HashMap<(char, char), u64>,
+    def: &HashMap<(char, char), char>,
+) -> HashMap<(char, char), u64> {
+    let mut result = HashMap::new();
+    for (k, v) in polymer.iter() {
+        if let Some(d) = def.get(k) {
+            *result.entry((k.0, *d)).or_insert(0) += *v;
+            *result.entry((*d, k.1)).or_insert(0) += *v;
+        } else {
+            *result.entry(*k).or_insert(0) += *v;
+        }
+    }
+    result
 }
 
-fn parse(ipt: &str) -> (LinkedList<char>, HashMap<(char, char), char>) {
+fn count(list: &HashMap<(char, char), u64>, (first, last): (char, char)) -> u64 {
+    let mut tree = list
+        .iter()
+        .fold(BTreeMap::new(), |mut acc, ((c1, c2), &num)| {
+            acc.entry(c1).and_modify(|x| *x += num).or_insert(num);
+            acc.entry(c2).and_modify(|x| *x += num).or_insert(num);
+            acc
+        });
+    *tree.entry(&first).or_insert(0) += 1;
+    *tree.entry(&last).or_insert(0) += 1;
+    println!("{:?}", tree);
+    let max = tree.iter().max_by_key(|(_, v)| *v).unwrap();
+    let min = tree.iter().min_by_key(|(_, v)| *v).unwrap();
+    (max.1 - min.1) / 2
+}
+
+fn parse(ipt: &str) -> (HashMap<(char, char), u64>, HashMap<(char, char), char>) {
     let mut lines = ipt.lines();
-    let template = lines.next().unwrap().chars().collect::<LinkedList<char>>();
+    let mut template = lines.next().unwrap().chars().peekable();
+    let mut def = HashMap::new();
+    while let (Some(lhs), Some(&rhs)) = (template.next(), template.peek()) {
+        def.entry((lhs, rhs)).and_modify(|x| *x += 1).or_insert(1);
+    }
+
     lines.next().expect("No reaction lines");
 
     let mp = lines
@@ -35,26 +64,5 @@ fn parse(ipt: &str) -> (LinkedList<char>, HashMap<(char, char), char>) {
             )
         })
         .collect::<HashMap<(char, char), char>>();
-    (template, mp)
-}
-
-fn insert(
-    mut heads: LinkedList<char>,
-    mut tails: LinkedList<char>,
-    mp: &HashMap<(char, char), char>,
-) -> LinkedList<char> {
-    if tails.is_empty() {
-        heads
-    } else if tails.len() == 1 {
-        heads.append(&mut tails);
-        heads
-    } else {
-        let x = tails.pop_front().unwrap();
-        let y = tails.front().unwrap();
-        heads.push_back(x);
-        if let Some(insertion) = mp.get(&(x, *y)) {
-            heads.push_back(*insertion);
-        }
-        insert(heads, tails, mp)
-    }
+    (def, mp)
 }
