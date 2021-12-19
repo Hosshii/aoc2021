@@ -4,6 +4,7 @@ fn main() -> MyResult<()> {
     let (ipt, packet) = parse_packet(&input)?;
     println!("{:?}", packet);
     println!("{}", packet.version_sum());
+    println!("{}", packet.values());
     Ok(())
 }
 
@@ -52,6 +53,48 @@ impl Packet {
         };
 
         self.version as u32 + child_version
+    }
+
+    fn values(&self) -> u64 {
+        match &self.kind {
+            PacketKind::Literal(literal) => *literal,
+            PacketKind::SubPackets(sub_packets) => match self.type_id {
+                0 => sub_packets.iter().fold(0, |acc, cur| acc + cur.values()),
+                1 => sub_packets.iter().fold(1, |acc, cur| acc * cur.values()),
+                2 => sub_packets.iter().map(|p| p.values()).min().unwrap(),
+                3 => sub_packets.iter().map(|p| p.values()).max().unwrap(),
+                x @ (5 | 6 | 7) => {
+                    let lhs = sub_packets[0].values();
+                    let rhs = sub_packets[1].values();
+                    match x {
+                        5 => {
+                            if lhs > rhs {
+                                1
+                            } else {
+                                0
+                            }
+                        }
+                        6 => {
+                            if lhs < rhs {
+                                1
+                            } else {
+                                0
+                            }
+                        }
+                        7 => {
+                            if lhs == rhs {
+                                1
+                            } else {
+                                0
+                            }
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+
+                _ => unreachable!(),
+            },
+        }
     }
 }
 
