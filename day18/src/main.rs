@@ -20,25 +20,24 @@ fn main() -> MyResult<()> {
     //     println!();
     // }
 
-    let mut a = inputs
+    let a = inputs
         .lines()
         .map(|l| parse_pair(l).unwrap().1)
-        .fold(None, |acc: Option<Pair<u8>>, mut cur| {
-            if let Some(a) = acc {
-                let mut added = a.add(cur);
-                _solve(&mut added);
-                Some(added)
-            } else {
-                _solve(&mut cur);
-                Some(cur)
+        .collect::<Vec<_>>();
+
+    let mut result = 0;
+    for l in a.clone() {
+        for r in a.clone() {
+            if l == r {
+                continue;
             }
-        })
-        .unwrap();
-    display_pair(&a);
-    _solve(&mut a);
-    println!("{}", a.magnitude());
-    // let parsed_display = DisplayPair(&a);
-    // println!("{}", parsed_display.display());
+            let mut added = l.clone() + r;
+            _solve(&mut added);
+            result = result.max(added.magnitude());
+        }
+    }
+
+    println!("{:?}", result);
     Ok(())
 }
 
