@@ -6,8 +6,8 @@ use std::{
 
 fn main() {
     println!("Hello, world!");
-    let ipt = include_str!("../input/input");
-    let (hole, room) = parse::<11, 2, 4>(ipt);
+    let ipt = include_str!("../input/input2");
+    let (hole, room) = parse::<11, 4, 4>(ipt);
     dbg!(&hole);
     dbg!(&room);
     let solved = solve(hole, room);
